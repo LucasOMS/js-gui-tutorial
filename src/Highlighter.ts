@@ -50,7 +50,6 @@ class Grid {
       this.everyYpositionOfGrid.push(elem.y);
       this.everyYpositionOfGrid.push(elem.y + elem.heigth);
     }
-    console.log(elements);
     const xPositions = [0, ...this.everyXpositionOfGrid].sort((a, b) => a - b);
     const yPositions = [0, ...this.everyYpositionOfGrid].sort((a, b) => a - b);
     for (const x of xPositions) {
@@ -77,13 +76,11 @@ class Grid {
 
   addToDOM() {
     // Append grid to the DOM
-    console.table(this.cells.sort((c1, c2) => c1.compareTo(c2)));
     document.body.insertAdjacentHTML('beforeend',
-      '<div class="js-gui-tutorial-grid" style="position:absolute; top:0; left: 0">' +
+      '<div id="js-gui-tutorial-grid">' +
       this.cells.sort((c1, c2) => c1.compareTo(c2)).map(cell =>
         cell.highlight ? '' : `<div class="js-gui-tutorial-cell" 
-                style="background: rgba(0, 0, 0, .7);
-                position: absolute; 
+                style=" 
                 top: ${cell.y}px;
                 left: ${cell.x}px; 
                 width: ${cell.width}px; 
