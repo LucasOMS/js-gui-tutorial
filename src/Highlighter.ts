@@ -15,19 +15,23 @@ class SquareToHighlight {
 class Cell {
   public x: number;
   public y: number;
+  public heigth: number;
+  public width: number;
   public highlight: boolean;
 
-  constructor(x: number, y: number, highlight: boolean = false) {
+  constructor(x: number, y: number, width: number, heigth: number, highlight: boolean = false) {
     this.x = x;
     this.y = y;
+    this.width = width;
+    this.heigth = heigth;
     this.highlight = highlight;
   }
 
   compareTo(cell: Cell) {
-    if (this.x < cell.x) return 1;
-    if (this.x > cell.x) return -1;
-    if (this.y < cell.y) return 1;
-    if (this.y > cell.y) return -1;
+    if (this.y < cell.y) return -1;
+    if (this.y > cell.y) return 1;
+    if (this.x < cell.x) return -1;
+    if (this.x > cell.x) return 1;
     return 0;
   }
 }
@@ -38,7 +42,6 @@ class Grid {
   private everyYpositionOfGrid: number[] = [];
 
   constructor(elements: SquareToHighlight[]) {
-    const positions: [number, number][] = [];
     for (const elem of elements) {
       this.everyXpositionOfGrid.push(elem.x);
       this.everyXpositionOfGrid.push(elem.x + elem.width);
@@ -47,52 +50,46 @@ class Grid {
       this.everyYpositionOfGrid.push(elem.y);
       this.everyYpositionOfGrid.push(elem.y + elem.heigth);
     }
-    for (const elem of elements) {
-      positions.push([elem.x, elem.y]);
-    }
-    for (const x of this.everyXpositionOfGrid) {
-      for (const y of this.everyYpositionOfGrid) {
-        this.cells.push(new Cell(x, y, shouldHighlight(x, y)));
+    console.log(elements);
+    const xPositions = [0, ...this.everyXpositionOfGrid].sort((a, b) => a - b);
+    const yPositions = [0, ...this.everyYpositionOfGrid].sort((a, b) => a - b);
+    for (const x of xPositions) {
+      const indexX = xPositions.indexOf(x);
+      if (indexX === xPositions.length - 1) continue;
+      for (const y of yPositions) {
+        const indexY = yPositions.indexOf(y);
+        if (indexY === yPositions.length - 1) continue;
+        const width = xPositions[indexX + 1] - xPositions[indexX];
+        const height = yPositions[indexY + 1] - yPositions[indexY];
+        this.cells.push(new Cell(x, y, width, height, shouldHighlight(x, y)));
       }
     }
 
     function shouldHighlight(x: number, y: number): boolean {
-      for (const pos of positions) {
-        if (pos[0] === x && pos[1] === y) return true;
+      for (const elem of elements) {
+        const withinX = elem.x <= x && elem.x + elem.width > x;
+        const withinY = elem.y <= y && elem.y + elem.heigth > y;
+        if (withinX && withinY) return true;
       }
       return false;
     }
   }
 
   addToDOM() {
-    const templateX = this.createTemplateGridFrom(this.everyXpositionOfGrid);
-    const templateY = this.createTemplateGridFrom(this.everyYpositionOfGrid);
     // Append grid to the DOM
+    console.table(this.cells.sort((c1, c2) => c1.compareTo(c2)));
     document.body.insertAdjacentHTML('beforeend',
-      `<div id="js-gui-tutorial-grid" style="position:absolute; 
-                top: 0; left:0; height: 100vh; width: 100vh; 
-                z-index: 1337; 
-                display: grid; 
-                grid-template-columns: ${templateX};
-                grid-template-rows: ${templateY}">
-            ${
-        this.cells.sort((c1, c2) => c1.compareTo(c2)).map(cell => `<div style="background: ${cell.highlight ? 'transparent' : 'blue'}"></div>`).join('')
-      }
-        </div>`);
-  }
-
-  // noinspection JSMethodCanBeStatic
-  private createTemplateGridFrom(positions: number[]): string {
-    positions.sort((a, b) => a - b);
-    const areas = [];
-    for (let i = 0; i < positions.length; i++) {
-      let areaSize = positions[i];
-      if (i > 0) {
-        areaSize -= positions[i - 1];
-      }
-      areas.push(areaSize);
-    }
-    return areas.map(pos => `${pos}px`).join(' ');
+      '<div class="js-gui-tutorial-grid" style="position:absolute; top:0; left: 0">' +
+      this.cells.sort((c1, c2) => c1.compareTo(c2)).map(cell =>
+        cell.highlight ? '' : `<div class="js-gui-tutorial-cell" 
+                style="background: rgba(0, 0, 0, .7);
+                position: absolute; 
+                top: ${cell.y}px;
+                left: ${cell.x}px; 
+                width: ${cell.width}px; 
+                height: ${cell.heigth}px"></div>`).join('')
+      + '</div>',
+    );
   }
 }
 
@@ -110,7 +107,7 @@ export class Highlighter {
       elements.push(new SquareToHighlight(rect.x, rect.y, rect.width, rect.height));
     });
 
-    // First step, create the grid
+    // Create the grid
     const grid = new Grid(elements);
     grid.addToDOM();
   }
