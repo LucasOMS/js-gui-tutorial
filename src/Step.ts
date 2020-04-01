@@ -1,4 +1,5 @@
 import { Highlighter } from './Highlighter';
+import { Indication, TooltipConfiguration } from './Indication';
 
 export class Step {
   private readonly highlightSelector: string;
@@ -6,15 +7,20 @@ export class Step {
   private hightlighter: Highlighter | undefined;
   private elementsWithListener: Element[] = [];
   private onFinishCallback: (() => void) | undefined;
+  private indicator: Indication | undefined;
+  private tooltipConfig: TooltipConfiguration;
 
-  constructor(highlightSelector: string, action: string) {
+  constructor(highlightSelector: string, action: string, tooltipConfig: TooltipConfiguration) {
     this.highlightSelector = highlightSelector;
     this.action = action;
+    this.tooltipConfig = tooltipConfig;
   }
 
   public start() {
-    this.highlight();
+    // Bind action first to prevent bind on generated DOM elements
     this.bindAction();
+    this.highlight();
+    this.showIndication();
   }
 
   public onFinish(callback: () => void) {
@@ -23,6 +29,8 @@ export class Step {
 
   private readonly finishStepCallback: () => void = () => {
     this.finish();
+    if (this.indicator)
+      this.indicator.destroy();
   };
 
   private bindAction() {
@@ -39,9 +47,17 @@ export class Step {
 
   private finish() {
     if (this.hightlighter) this.hightlighter.unhighlight();
+
     for (const elem of this.elementsWithListener) {
       elem.removeEventListener(this.action, this.finishStepCallback);
     }
     if (this.onFinishCallback) this.onFinishCallback();
+  }
+
+  private showIndication() {
+    this.indicator = new Indication(this.tooltipConfig);
+    if (this.tooltipConfig.actionName)
+      this.indicator.onAction(this.finish.bind(this));
+    this.indicator.show();
   }
 }
