@@ -100,8 +100,23 @@ export class Highlighter {
   public highlight() {
     const elements: SquareToHighlight[] = [];
     document.querySelectorAll(this.selector).forEach(elem => {
-      const rect = elem.getBoundingClientRect();
-      elements.push(new SquareToHighlight(rect.x, rect.y, rect.width, rect.height));
+      elements.push(computeSquareRectToHighlitghtFromDOMElement(elem));
+
+      function computeSquareRectToHighlitghtFromDOMElement(element: any) {
+        const DOMposition = getOffset(element);
+        return new SquareToHighlight(DOMposition.x, DOMposition.y, element.offsetWidth, element.offsetHeight);
+      }
+
+      function getOffset(element: any) {
+        let _x = 0;
+        let _y = 0;
+        while (element && !isNaN(element.offsetLeft) && !isNaN(element.offsetTop)) {
+          _x += element.offsetLeft - element.scrollLeft;
+          _y += element.offsetTop - element.scrollTop;
+          element = element.offsetParent;
+        }
+        return { x: _x, y: _y };
+      }
     });
 
     // Create the grid
