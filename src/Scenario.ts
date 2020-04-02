@@ -23,9 +23,9 @@ export class Scenario {
   startStep() {
     this.steps[this.currentStep].start();
     if (this.currentStep + 1 === this.steps.length) // Finish the last step finishes the scenario
-      this.steps[this.currentStep].onFinish(this.finish);
+      this.steps[this.currentStep].onFinish(this.finish.bind(this));
     else // Finish a step start the next one
-      this.steps[this.currentStep].onFinish(this.startStep);
+      this.steps[this.currentStep].onFinish(this.startStep.bind(this));
     this.currentStep += 1; // Go to next step for next call
   }
 
